@@ -18,6 +18,9 @@ const MONTH_MAP = {
 export function parseDate(val) {
   if (!val) return new Date(NaN)
   const s = String(val)
+  // GViz Date(year,month0,day,h,m,s) — Google Sheets API gviz/tq
+  const mGviz = s.match(/^Date\((\d+),(\d+),(\d+)(?:,(\d+),(\d+),(\d+))?\)/)
+  if (mGviz) return new Date(+mGviz[1], +mGviz[2], +mGviz[3], +(mGviz[4]||0), +(mGviz[5]||0), +(mGviz[6]||0))
   // DD/MMM/YYYY HH:mm — mes en texto (ej: 01/jul/2026 19:53)
   const mText = s.match(/^(\d{1,2})\/([a-zA-Z]{3})\/(\d{4})\s+(\d{1,2}):(\d{2})/)
   if (mText) {
