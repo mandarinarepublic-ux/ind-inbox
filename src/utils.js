@@ -9,10 +9,24 @@ export const colorFor    = (phone) => COLORS[parseInt(phone.slice(-2) || '0') % 
 export const initialsFor = (name)  => name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()
 
 // ── DATE FORMATTING ──────────────────────────────────────────────
+const MONTH_MAP = {
+  ene:0, feb:1, mar:2, abr:3, may:4, jun:5,
+  jul:6, ago:7, sep:8, oct:9, nov:10, dic:11,
+  jan:0, apr:3, aug:7, dec:11,
+}
+
 function parseDate(val) {
   if (!val) return new Date(NaN)
-  const m = String(val).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})/)
-  if (m) return new Date(+m[3], +m[2] - 1, +m[1], +m[4], +m[5])
+  const s = String(val)
+  // DD/MMM/YYYY HH:mm — mes en texto (ej: 01/jul/2026 19:53)
+  const mText = s.match(/^(\d{1,2})\/([a-zA-Z]{3})\/(\d{4})\s+(\d{1,2}):(\d{2})/)
+  if (mText) {
+    const mon = MONTH_MAP[mText[2].toLowerCase()]
+    if (mon !== undefined) return new Date(+mText[3], mon, +mText[1], +mText[4], +mText[5])
+  }
+  // DD/MM/YYYY HH:mm — mes numérico
+  const mNum = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})/)
+  if (mNum) return new Date(+mNum[3], +mNum[2] - 1, +mNum[1], +mNum[4], +mNum[5])
   return new Date(val)
 }
 
