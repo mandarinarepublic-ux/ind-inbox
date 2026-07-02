@@ -15,7 +15,7 @@ const MONTH_MAP = {
   jan:0, apr:3, aug:7, dec:11,
 }
 
-function parseDate(val) {
+export function parseDate(val) {
   if (!val) return new Date(NaN)
   const s = String(val)
   // DD/MMM/YYYY HH:mm — mes en texto (ej: 01/jul/2026 19:53)

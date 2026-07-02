@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { fetchRows, fetchContacts, sendReply, updateContact, isDemo, sendInteractiveButtons, toggleIAMode, sendVideo } from './api.js'
-import { buildConvs, fmtDate } from './utils.js'
+import { buildConvs, fmtDate, parseDate as _parseDate } from './utils.js'
 import { Spinner, Avatar, ContactRow, MessageBubble, Toast } from './Components.jsx'
 import RightPanel from './RightPanel.jsx'
 import { actualizarNoLeidos } from './notif.js'
@@ -192,7 +192,7 @@ export default function App() {
   }
 
   const lastIncoming = activeConv ? [...activeConv.msgs].reverse().find(m => m.direccion === 'ENTRANTE') : null
-  const windowOpen   = lastIncoming ? (Date.now() - new Date(lastIncoming.timestamp).getTime()) < 24 * 60 * 60 * 1000 : false
+  const windowOpen   = lastIncoming ? (Date.now() - _parseDate(lastIncoming.timestamp).getTime()) < 24 * 60 * 60 * 1000 : false
 
   const changingRef = useRef({})
   const changeStatus = async (telefono, status) => {
@@ -515,7 +515,7 @@ export default function App() {
 
               {/* Input bar */}
               <div className="input-bar" style={{ position:'relative' }}>
-                {!windowOpen && (
+                {!windowOpen && lastIncoming && (
                   <div style={{ marginBottom:8, padding:'5px 12px', background:'rgba(245,158,11,.08)', border:'1px solid rgba(245,158,11,.2)', borderRadius:8, fontSize:11, color:'#fbbf24', textAlign:'center' }}>
                     ⚠️ Ventana de 24h cerrada
                   </div>

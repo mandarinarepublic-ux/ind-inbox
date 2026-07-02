@@ -3,9 +3,9 @@ import { CFG } from './config.js'
 // ── IND Store Sheet ───────────────────────────────────────────────
 const SHEET_ID      = '1ObNIff1ypeFW7PfuAjeoiGBJCDyZU4etIsbGpyB-Nqk'
 
-// ── Meta credentials IND (completar cuando esté aprobado el número) ──
-const META_PHONE_ID = ''   // Phone Number ID de IND
-const META_TOKEN    = ''   // Access Token de IND
+// ── Meta credentials IND ────────────────────────────────────────
+const META_PHONE_ID = '1092674123940116'
+const META_TOKEN    = 'EAAV1SMGzaLkBR01kWvaBlW0EyWAHIAah0fBPU85s1ZClKFoAoyqZCmO4vG6tOXUdGWRkxZAGISpU7fK3kyyfijf5YH00OLae57dJsFVNTDhIUv3IuzbVOEZBdd8zDvEGYPACtF0dIB7gs4DmPvPhF4pQ2JZBuLk20NZAyPsKxRw4xaTwZBMCnisf7nsJyFsDPfZC4AZDZD'
 
 export const isDemo = () => false
 
