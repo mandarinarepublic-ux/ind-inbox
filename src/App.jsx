@@ -490,7 +490,7 @@ export default function App() {
               {/* Mensajes */}
               <div ref={msgsRef} className="msgs-scroll" onScroll={handleMsgsScroll} style={{ background:`radial-gradient(ellipse at 20% 10%, rgba(244,241,236,.015) 0%, transparent 60%)` }}>
                 {activeConv.msgs.map((msg, idx) => {
-                  const showDate = idx===0 || new Date(msg.timestamp).toDateString() !== new Date(activeConv.msgs[idx-1].timestamp).toDateString()
+                  const showDate = idx===0 || _parseDate(msg.timestamp).toDateString() !== _parseDate(activeConv.msgs[idx-1].timestamp).toDateString()
                   return (
                     <div key={msg.id}>
                       {showDate && (

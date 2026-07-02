@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { colorFor, initialsFor, fmtTime } from './utils.js'
+import { colorFor, initialsFor, fmtTime, parseDate } from './utils.js'
 
 // Paleta IND
 const C = {
@@ -195,17 +195,18 @@ export function MessageBubble({ msg, allMsgs }) {
         {!hasText && !hasMedia && <p style={{ margin: 0, fontSize: 13, color: C.creamFaint, fontStyle: 'italic' }}>{msg.tipo ? `[${msg.tipo}]` : '[mensaje]'}</p>}
         <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 5, marginTop: 4 }}>
           <span style={{ fontSize: 10, color: C.creamFaint }}>
-            {(() => {
-              const d = new Date(msg.timestamp)
-              const today = new Date()
-              const yesterday = new Date(today); yesterday.setDate(today.getDate()-1)
-              const isToday = d.toDateString() === today.toDateString()
-              const isYesterday = d.toDateString() === yesterday.toDateString()
-              const timeStr = d.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})
-              if (isToday) return timeStr
-              if (isYesterday) return `Ayer ${timeStr}`
-              return `${d.getDate()}${['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][d.getMonth()]} ${timeStr}`
-            })()}
+          {(() => {
+          const d = parseDate(msg.timestamp)
+          const today = new Date()
+          const yesterday = new Date(today); yesterday.setDate(today.getDate()-1)
+          const isToday = d.toDateString() === today.toDateString()
+          const isYesterday = d.toDateString() === yesterday.toDateString()
+          const timeStr = isNaN(d) ? '' : d.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'})
+          if (isNaN(d)) return ''
+          if (isToday) return timeStr
+          if (isYesterday) return `Ayer ${timeStr}`
+            return `${d.getDate()}${['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][d.getMonth()]} ${timeStr}`
+            })()} 
           </span>
           {isMe && <StatusPill estado={msg.estado} />}
         </div>
