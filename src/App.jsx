@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { fetchRows, fetchContacts, sendReply, updateContact, isDemo, sendInteractiveButtons, toggleIAMode, sendVideo } from './api.js'
+import { fetchRows, fetchContacts, sendReply, sendImageUrl as sendImageUrlApi, updateContact, isDemo, sendInteractiveButtons, toggleIAMode, sendVideo } from './api.js'
 import { buildConvs, fmtDate, parseDate as _parseDate } from './utils.js'
 import { Spinner, Avatar, ContactRow, MessageBubble, Toast } from './Components.jsx'
 import RightPanel from './RightPanel.jsx'
@@ -296,12 +296,13 @@ export default function App() {
     if (!activeConv) return
     // 1. Texto primero
     if (reply.text) await handleSend(reply.text)
-    // 2. Fotos en secuencia
+    // 2. Fotos en secuencia usando api.js (URL hardcodeada)
     const imgs = [reply.imageUrl, reply.imageUrl2, reply.imageUrl3].filter(Boolean)
     for (let i = 0; i < imgs.length; i++) {
-      await sendImageUrl(imgs[i])
+      await sendImageUrlApi(activeConv.telefono, activeConv.nombre, imgs[i])
       if (i < imgs.length - 1) await new Promise(r => setTimeout(r, 800))
     }
+    await changeStatus(activeConv.telefono, currentStatus === 'ventaproceso' ? 'ventaproceso' : 'atendido')
   }
 
   const handleSendAIImage = async (imageUrl) => {
