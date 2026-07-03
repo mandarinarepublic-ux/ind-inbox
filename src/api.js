@@ -182,9 +182,9 @@ export async function sendVideo(telefono, nombre, videoFile) {
 
 // ── RESPUESTAS RÁPIDAS CRUD ───────────────────────────────────────
 export async function writeReply(accion, reply) {
-  if (!CFG.MAKE_REPLIES_WRITE) return
+  const _url = 'https://hook.us2.make.com/txowwyf2hvjrxcu6q5ji2m5oxtmeu47u'
   try {
-    await fetch(CFG.MAKE_REPLIES_WRITE, {
+    await fetch(_url, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ accion, id: reply.id, texto: reply.text, imagenUrl: reply.imageUrl }),
     })
