@@ -84,7 +84,13 @@ export async function saveNotes(telefono, nombre, notas) {
 
 // ── RESPUESTAS RÁPIDAS ────────────────────────────────────────────
 function mapReply(row) {
-  return { id: String(row[0] || ''), text: row[1] || '', imageUrl: row[2] || '' }
+  return {
+    id:        String(row[0] || ''),
+    text:      row[1] || '',
+    imageUrl:  row[2] || '',
+    imageUrl2: row[3] || '',
+    imageUrl3: row[4] || '',
+  }
 }
 
 export async function fetchRepliesFromSheet() {
