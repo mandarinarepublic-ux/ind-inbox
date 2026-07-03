@@ -413,12 +413,11 @@ export default function App() {
               </div>
               <div style={{ display:'flex', gap:4, flexWrap:'wrap' }}>
                 {[
-                  { key:'pendiente',    label:'🔴 Pendientes',   color:'#f87171' },
-                  { key:'atendido',     label:'🟢 Atendidos',    color:'#4ade80' },
-                  { key:'ventaproceso', label:'🟡 En proceso',   color:'#f59e0b' },
-                  { key:'venta',        label:'💰 Ventas',       color:'#10b981' },
-                  { key:'archivado',    label:'⚫ Archivados',   color:C.creamDim },
-                ].map(({ key, label, color }) => (
+                  { key:'pendiente',    label:'Pendientes',   icon:'🔴', color:'#f87171' },
+                  { key:'atendido',     label:'Atendidos',    icon:'🟢', color:'#4ade80' },
+                  { key:'ventaproceso', label:'En proceso',   icon:'🟡', color:'#f59e0b' },
+                  { key:'venta',        label:'Ventas',       icon:'💰', color:'#10b981' },
+                ].map(({ key, label, icon, color }) => (
                   <button key={key} onClick={() => setFilter(key)} style={{
                     flex:1, padding:'5px 2px', fontSize:9, fontWeight:700,
                     background:filter===key?`${color}18`:'transparent',
@@ -426,10 +425,24 @@ export default function App() {
                     color:filter===key?color:C.creamFaint,
                     borderRadius:7, cursor:'pointer', fontFamily:'inherit', transition:'all .15s',
                   }}>
-                    {label}
+                    {icon} {label}
                     {counts[key]>0 && <span style={{ marginLeft:3, background:filter===key?color:C.border2, color:filter===key?C.bg:C.creamDim, borderRadius:10, padding:'0 4px', fontSize:8, fontWeight:800 }}>{counts[key]}</span>}
                   </button>
                 ))}
+              </div>
+              {/* Archivados colapsado */}
+              <div style={{ marginTop:4 }}>
+                <button onClick={() => setFilter('archivado')} style={{
+                  width:'100%', padding:'4px 8px', fontSize:9, fontWeight:700,
+                  background:filter==='archivado'?`rgba(160,154,144,.18)`:'transparent',
+                  border:`1px solid ${filter==='archivado'?'rgba(160,154,144,.4)':C.border}`,
+                  color:filter==='archivado'?C.creamDim:C.creamFaint,
+                  borderRadius:7, cursor:'pointer', fontFamily:'inherit', transition:'all .15s',
+                  display:'flex', alignItems:'center', justifyContent:'center', gap:4,
+                }}>
+                  ⚫ Archivados
+                  {counts['archivado']>0 && <span style={{ background:filter==='archivado'?C.creamDim:C.border2, color:filter==='archivado'?C.bg:C.creamFaint, borderRadius:10, padding:'0 5px', fontSize:8, fontWeight:800 }}>{counts['archivado']}</span>}
+                </button>
               </div>
             </div>
 
