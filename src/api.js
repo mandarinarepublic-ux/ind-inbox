@@ -7,7 +7,8 @@ const SHEET_ID      = '1ObNIff1ypeFW7PfuAjeoiGBJCDyZU4etIsbGpyB-Nqk'
 const META_PHONE_ID = '1092674123940116'
 const META_TOKEN    = 'EAAV1SMGzaLkBR01kWvaBlW0EyWAHIAah0fBPU85s1ZClKFoAoyqZCmO4vG6tOXUdGWRkxZAGISpU7fK3kyyfijf5YH00OLae57dJsFVNTDhIUv3IuzbVOEZBdd8zDvEGYPACtF0dIB7gs4DmPvPhF4pQ2JZBuLk20NZAyPsKxRw4xaTwZBMCnisf7nsJyFsDPfZC4AZDZD'
 
-export const isDemo = () => false
+// ── Webhook envío IND (hardcodeado para evitar env var vacía) ─────────────────
+const SEND_WEBHOOK = 'https://hook.us2.make.com/fm5f8e9ow7k5vtykqhihcjt7yg25v9u9'
 
 // ── Helper Google Sheets ─────────────────────────────────────────
 async function fetchSheet(sheetName) {
@@ -106,7 +107,7 @@ export async function fetchRepliesFromSheet() {
 // ── ENVIAR TEXTO ──────────────────────────────────────────────────
 export async function sendReply(telefono, nombre, mensaje) {
   try {
-    const res = await fetch(CFG.MAKE_SEND_WEBHOOK, {
+    const res = await fetch(SEND_WEBHOOK, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ Telefono: telefono, Nombre: nombre, Mensaje: mensaje }),
     })
@@ -117,7 +118,7 @@ export async function sendReply(telefono, nombre, mensaje) {
 // ── ENVIAR IMAGEN URL ─────────────────────────────────────────────
 export async function sendImageUrl(telefono, nombre, imageUrl) {
   try {
-    const res = await fetch(CFG.MAKE_SEND_WEBHOOK, {
+    const res = await fetch(SEND_WEBHOOK, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ Telefono: telefono, Nombre: nombre, ImagenURL: imageUrl }),
     })
@@ -129,7 +130,7 @@ export async function sendImageUrl(telefono, nombre, imageUrl) {
 export async function sendInteractiveButtons(telefono, nombre, body, buttons) {
   try {
     const botonesFormateados = buttons.map(b => ({ type: 'reply', reply: { id: b.id, title: b.title } }))
-    const res = await fetch(CFG.MAKE_SEND_WEBHOOK, {
+    const res = await fetch(SEND_WEBHOOK, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         Telefono: telefono, Nombre: nombre,
@@ -175,7 +176,7 @@ export async function sendVideo(telefono, nombre, videoFile) {
     })
     const uploadData = await uploadRes.json()
     if (!uploadData.id) throw new Error(uploadData.error?.message || 'Upload fallido')
-    const res = await fetch(CFG.MAKE_SEND_WEBHOOK, {
+    const res = await fetch(SEND_WEBHOOK, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ Telefono: telefono, Nombre: nombre, VideoMediaId: uploadData.id }),
     })
