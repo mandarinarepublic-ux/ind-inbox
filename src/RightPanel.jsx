@@ -240,6 +240,7 @@ export default function RightPanel({ activeConv, onQuickReply, onSendText, onSen
         ) : (
           <div style={{ padding: '12px', textAlign: 'center', color: C.creamFaint, fontSize: 11, background: `rgba(244,241,236,.02)`, borderRadius: 8, border: `1px dashed ${C.border2}` }}>Esperando mensaje...</div>
         )}
+        </div>}
       </div>
 
       {/* RESPUESTAS RÁPIDAS */}
