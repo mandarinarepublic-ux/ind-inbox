@@ -294,8 +294,14 @@ export default function App() {
 
   const handleQuickReply = async (reply) => {
     if (!activeConv) return
+    // 1. Texto primero
     if (reply.text) await handleSend(reply.text)
-    if (reply.imageUrl) await sendImageUrl(reply.imageUrl)
+    // 2. Fotos en secuencia
+    const imgs = [reply.imageUrl, reply.imageUrl2, reply.imageUrl3].filter(Boolean)
+    for (let i = 0; i < imgs.length; i++) {
+      await sendImageUrl(imgs[i])
+      if (i < imgs.length - 1) await new Promise(r => setTimeout(r, 800))
+    }
   }
 
   const handleSendAIImage = async (imageUrl) => {
