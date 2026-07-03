@@ -5,7 +5,6 @@ import { parseDate } from './utils.js'
 
 const IMGBB_KEY = '2307574d43689522feabd27cff3443df'
 
-// Paleta IND
 const C = {
   bg:        '#0A0A0A',
   surface:   '#0D0D0D',
@@ -39,8 +38,16 @@ const uploadImg = async (file, setUrl, setPrev, setLoading) => {
     const fd = new FormData(); fd.append('image', converted)
     const res  = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, { method: 'POST', body: fd })
     const data = await res.json()
-    if (data.success) { setUrl(data.data.url); setPrev(data.data.url) }
+    if (data.success) { setUrl(data.data.url); if(setPrev) setPrev(data.data.url) }
   } finally { setLoading(false) }
+}
+
+async function uploadImgSimple(file) {
+  const converted = await toJpeg(file)
+  const fd = new FormData(); fd.append('image', converted)
+  const res  = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, { method: 'POST', body: fd })
+  const data = await res.json()
+  return data.success ? data.data.url : ''
 }
 
 export default function RightPanel({ activeConv, onQuickReply, onSendText, onSendImage, contactInfo, onUpdateContact, windowOpen }) {
@@ -67,10 +74,14 @@ export default function RightPanel({ activeConv, onQuickReply, onSendText, onSen
   const [editText,      setEditText]      = useState('')
   const [editImgUrl,    setEditImgUrl]    = useState('')
   const [editImgPrev,   setEditImgPrev]   = useState('')
+  const [editImgUrl2,   setEditImgUrl2]   = useState('')
+  const [editImgUrl3,   setEditImgUrl3]   = useState('')
   const [editUploading, setEditUploading] = useState(false)
   const [newText,       setNewText]       = useState('')
   const [newImgUrl,     setNewImgUrl]     = useState('')
   const [newImgPrev,    setNewImgPrev]    = useState('')
+  const [newImgUrl2,    setNewImgUrl2]    = useState('')
+  const [newImgUrl3,    setNewImgUrl3]    = useState('')
   const [newUploading,  setNewUploading]  = useState(false)
   const [sending,       setSending]       = useState(null)
   const [editAlias,     setEditAlias]     = useState(false)
@@ -88,11 +99,14 @@ export default function RightPanel({ activeConv, onQuickReply, onSendText, onSen
   const [notasInput,    setNotasInput]    = useState('')
   const [notasSaving,   setNotasSaving]   = useState(false)
   const [notasSaved,    setNotasSaved]    = useState(false)
-  const [openIA,      setOpenIA]      = useState(true)
-  const [openReplies, setOpenReplies] = useState(true)
+  const [openIA,        setOpenIA]        = useState(true)
   const notasLoadedRef = useRef(null)
   const editFileRef    = useRef(null)
+  const editFileRef2   = useRef(null)
+  const editFileRef3   = useRef(null)
   const newFileRef     = useRef(null)
+  const newFileRef2    = useRef(null)
+  const newFileRef3    = useRef(null)
   const aiImgFileRef   = useRef(null)
 
   useEffect(() => {
@@ -118,20 +132,29 @@ export default function RightPanel({ activeConv, onQuickReply, onSendText, onSen
   if (aiSuggestion && aiSuggestion !== lastAiMsg) { setLastAiMsg(aiSuggestion); setAiText(aiSuggestion); setAiSent(false) }
   if (aiImgShopify && aiImgShopify !== lastAiImgSrc) { setLastAiImgSrc(aiImgShopify); setAiImgUrl(aiImgShopify); setAiImgPrev(aiImgShopify); setAiImgSent(false) }
 
-  const startEdit = (idx) => { setEditingIdx(idx); setEditText(replies[idx].text); setEditImgUrl(replies[idx].imageUrl); setEditImgPrev(replies[idx].imageUrl) }
+  const startEdit = (idx) => {
+    setEditingIdx(idx)
+    setEditText(replies[idx].text)
+    setEditImgUrl(replies[idx].imageUrl || '');  setEditImgPrev(replies[idx].imageUrl || '')
+    setEditImgUrl2(replies[idx].imageUrl2 || '')
+    setEditImgUrl3(replies[idx].imageUrl3 || '')
+  }
   const saveEdit = async () => {
     if (!editText.trim()) return
-    const updated = { ...replies[editingIdx], text: editText.trim(), imageUrl: editImgUrl }
+    const updated = { ...replies[editingIdx], text: editText.trim(), imageUrl: editImgUrl, imageUrl2: editImgUrl2, imageUrl3: editImgUrl3 }
     setReplies(prev => prev.map((r, i) => i === editingIdx ? updated : r))
-    setEditingIdx(null); setEditText(''); setEditImgUrl(''); setEditImgPrev('')
+    setEditingIdx(null); setEditText(''); setEditImgUrl(''); setEditImgPrev(''); setEditImgUrl2(''); setEditImgUrl3('')
     await writeReply('actualizar', updated)
   }
   const deleteReply = async (idx) => { const r = replies[idx]; setReplies(prev => prev.filter((_, i) => i !== idx)); await writeReply('eliminar', r) }
   const addReply = async () => {
     if (!newText.trim()) return
-    const nr = { id: crypto.randomUUID(), text: newText.trim(), imageUrl: newImgUrl }
-    setReplies(prev => [...prev, nr]); setNewText(''); setNewImgUrl(''); setNewImgPrev('')
+    const nr = { id: crypto.randomUUID(), text: newText.trim(), imageUrl: newImgUrl, imageUrl2: newImgUrl2, imageUrl3: newImgUrl3 }
+    setReplies(prev => [...prev, nr])
+    setNewText(''); setNewImgUrl(''); setNewImgPrev(''); setNewImgUrl2(''); setNewImgUrl3('')
     if (newFileRef.current) newFileRef.current.value = ''
+    if (newFileRef2.current) newFileRef2.current.value = ''
+    if (newFileRef3.current) newFileRef3.current.value = ''
     await writeReply('agregar', nr)
   }
   const handleSendQuick = async (idx) => { setSending(idx); await onQuickReply(replies[idx]); setSending(null) }
@@ -156,10 +179,23 @@ export default function RightPanel({ activeConv, onQuickReply, onSendText, onSen
   }
 
   const contactName = contactInfo?.alias || contactInfo?.nombre || activeConv.nombre
-
-  // Estilos reutilizables
   const btnBase = { fontFamily: 'inherit', cursor: 'pointer', transition: 'all .15s' }
   const inputBase = { background: C.bg, border: `1px solid ${C.border}`, borderRadius: 7, color: C.cream, fontSize: 12, padding: '6px 9px', outline: 'none', fontFamily: 'inherit' }
+
+  const ImgSlot = ({ url, onClear, fileRef, onFile, label, uploading }) => (
+    <div style={{ marginTop: 4 }}>
+      {url ? (
+        <div style={{ position:'relative' }}>
+          <img src={url} style={{ width:'100%', height:44, objectFit:'cover', borderRadius:5, display:'block' }} alt="" onError={e=>e.currentTarget.style.display='none'} />
+          {uploading && <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,.5)', borderRadius:5, display:'flex', alignItems:'center', justifyContent:'center', fontSize:10, color:C.cream }}>Subiendo...</div>}
+          <button onClick={onClear} style={{ position:'absolute', top:2, right:2, background:'rgba(0,0,0,.7)', border:'none', color:'#f87171', borderRadius:'50%', width:16, height:16, cursor:'pointer', fontSize:9, display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
+        </div>
+      ) : (
+        <button onClick={() => fileRef.current?.click()} style={{ ...btnBase, width:'100%', padding:'4px', background:'transparent', border:`1px dashed ${C.border2}`, borderRadius:6, color:C.creamFaint, fontSize:10 }}>{label}</button>
+      )}
+      <input ref={fileRef} type="file" accept="image/*" style={{ display:'none' }} onChange={onFile} />
+    </div>
+  )
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: C.surface, overflow: 'hidden' }}>
@@ -185,17 +221,10 @@ export default function RightPanel({ activeConv, onQuickReply, onSendText, onSen
             <div style={{ fontSize: 10, color: C.creamFaint, marginTop: 1 }}>+{activeConv.telefono}</div>
           </div>
         </div>
-
-        {/* Ventana 24h */}
         <div style={{ marginTop: 7, padding: '5px 10px', background: windowOpen ? `rgba(244,241,236,.05)` : 'rgba(245,158,11,.06)', border: `1px solid ${windowOpen ? 'rgba(244,241,236,.15)' : 'rgba(245,158,11,.2)'}`, borderRadius: 7, fontSize: 11, color: windowOpen ? C.cream : '#f59e0b', fontWeight: 700, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span>{windowOpen ? '✅ Ventana activa' : '⚠️ Ventana cerrada'}</span>
-          {countdown && windowOpen && (
-            <span style={{ fontFamily: 'monospace', fontSize: 12, fontWeight: 800, color: parseInt(countdown.split(':')[0]) === 0 && parseInt(countdown.split(':')[1]) < 30 ? '#f87171' : C.cream }}>⏱ {countdown}</span>
-          )}
+          {countdown && windowOpen && <span style={{ fontFamily: 'monospace', fontSize: 12, fontWeight: 800, color: parseInt(countdown.split(':')[0]) === 0 && parseInt(countdown.split(':')[1]) < 30 ? '#f87171' : C.cream }}>⏱ {countdown}</span>}
           {!windowOpen && <span style={{ fontFamily: 'monospace', fontSize: 11, color: C.creamFaint }}>Expirada</span>}
-        </div>
-
-        <div style={{ marginTop: 7, display: 'flex', gap: 6 }}>
         </div>
       </div>
 
@@ -209,37 +238,37 @@ export default function RightPanel({ activeConv, onQuickReply, onSendText, onSen
           <span style={{ color: C.creamFaint, fontSize: 10 }}>{openIA ? '▲' : '▼'}</span>
         </button>
         {openIA && <div style={{ padding: '0 12px 10px' }}>
-        {aiSuggestion ? (
-          <>
-            {(aiImgPrev || aiImgShopify) && (
-              <div style={{ marginBottom: 7, position: 'relative', borderRadius: 8, overflow: 'hidden', border: `1px solid ${C.border2}` }}>
-                <img src={aiImgPrev || aiImgShopify} alt="Producto" style={{ width: '100%', height: 90, objectFit: 'cover', display: 'block' }} onError={e => e.currentTarget.style.display='none'} />
-                {aiImgUploading && <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: C.cream }}>Subiendo...</div>}
-                <div style={{ position: 'absolute', bottom: 4, right: 4, display: 'flex', gap: 3 }}>
-                  <button onClick={() => aiImgFileRef.current?.click()} style={{ ...btnBase, background: 'rgba(0,0,0,.7)', border: `1px solid rgba(255,255,255,.2)`, color: C.cream, borderRadius: 5, padding: '2px 6px', fontSize: 9 }}>🔄 Cambiar</button>
-                  <button onClick={() => { setAiImgUrl(''); setAiImgPrev(''); setAiImgSent(false) }} style={{ ...btnBase, background: 'rgba(0,0,0,.7)', border: `1px solid rgba(255,255,255,.2)`, color: '#f87171', borderRadius: 5, padding: '2px 6px', fontSize: 9 }}>✕</button>
+          {aiSuggestion ? (
+            <>
+              {(aiImgPrev || aiImgShopify) && (
+                <div style={{ marginBottom: 7, position: 'relative', borderRadius: 8, overflow: 'hidden', border: `1px solid ${C.border2}` }}>
+                  <img src={aiImgPrev || aiImgShopify} alt="Producto" style={{ width: '100%', height: 90, objectFit: 'cover', display: 'block' }} onError={e => e.currentTarget.style.display='none'} />
+                  {aiImgUploading && <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: C.cream }}>Subiendo...</div>}
+                  <div style={{ position: 'absolute', bottom: 4, right: 4, display: 'flex', gap: 3 }}>
+                    <button onClick={() => aiImgFileRef.current?.click()} style={{ ...btnBase, background: 'rgba(0,0,0,.7)', border: `1px solid rgba(255,255,255,.2)`, color: C.cream, borderRadius: 5, padding: '2px 6px', fontSize: 9 }}>🔄 Cambiar</button>
+                    <button onClick={() => { setAiImgUrl(''); setAiImgPrev(''); setAiImgSent(false) }} style={{ ...btnBase, background: 'rgba(0,0,0,.7)', border: `1px solid rgba(255,255,255,.2)`, color: '#f87171', borderRadius: 5, padding: '2px 6px', fontSize: 9 }}>✕</button>
+                  </div>
+                  <input ref={aiImgFileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAiImgReplace} />
                 </div>
-                <input ref={aiImgFileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAiImgReplace} />
+              )}
+              {aiImgUrl && (
+                <button onClick={handleSendAIImage} disabled={aiImgSending || aiImgSent || !windowOpen} style={{ ...btnBase, width: '100%', marginBottom: 5, padding: '5px', background: aiImgSent ? `rgba(244,241,236,.1)` : aiImgSending ? C.bg : 'rgba(99,102,241,.12)', border: `1px solid ${aiImgSent ? 'rgba(244,241,236,.25)' : 'rgba(99,102,241,.3)'}`, color: aiImgSent ? C.cream : '#818cf8', borderRadius: 7, fontSize: 10, fontWeight: 700, cursor: aiImgSent || aiImgSending ? 'default' : 'pointer' }}>
+                  {aiImgSent ? '✓ Foto enviada' : aiImgSending ? '⏳ Enviando...' : '🖼 Enviar foto del producto'}
+                </button>
+              )}
+              <textarea value={aiText} onChange={e => { setAiText(e.target.value); setAiSent(false) }} rows={3}
+                style={{ width: '100%', background: `rgba(244,241,236,.04)`, border: `1px solid ${aiSent ? 'rgba(244,241,236,.25)' : 'rgba(99,102,241,.25)'}`, borderRadius: 8, color: C.cream, fontSize: 12, padding: '7px 9px', resize: 'none', outline: 'none', fontFamily: 'inherit', lineHeight: 1.5, whiteSpace: 'pre-wrap' }} />
+              <div style={{ display: 'flex', gap: 5, marginTop: 5 }}>
+                <button onClick={handleSendAI} disabled={aiSending || aiSent || !aiText.trim() || !windowOpen}
+                  style={{ ...btnBase, flex: 2, padding: '6px', background: aiSent ? `rgba(244,241,236,.1)` : aiSending ? C.bg : 'linear-gradient(135deg,#6366f1,#4f46e5)', border: `1px solid ${aiSent ? 'rgba(244,241,236,.25)' : 'rgba(99,102,241,.4)'}`, color: aiSent ? C.cream : '#fff', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: aiSent || aiSending ? 'default' : 'pointer' }}>
+                  {aiSent ? '✓ Enviado' : aiSending ? '⏳...' : '📤 Enviar texto'}
+                </button>
+                <button onClick={() => onSendText && onSendText(null, aiText)} style={{ ...btnBase, flex: 1, padding: '6px', background: `rgba(244,241,236,.04)`, border: `1px solid ${C.border}`, color: C.creamDim, borderRadius: 7, fontSize: 11, cursor: 'pointer' }}>✏️ Editar</button>
               </div>
-            )}
-            {aiImgUrl && (
-              <button onClick={handleSendAIImage} disabled={aiImgSending || aiImgSent || !windowOpen} style={{ ...btnBase, width: '100%', marginBottom: 5, padding: '5px', background: aiImgSent ? `rgba(244,241,236,.1)` : aiImgSending ? C.bg : 'rgba(99,102,241,.12)', border: `1px solid ${aiImgSent ? 'rgba(244,241,236,.25)' : 'rgba(99,102,241,.3)'}`, color: aiImgSent ? C.cream : '#818cf8', borderRadius: 7, fontSize: 10, fontWeight: 700, cursor: aiImgSent || aiImgSending ? 'default' : 'pointer' }}>
-                {aiImgSent ? '✓ Foto enviada' : aiImgSending ? '⏳ Enviando...' : '🖼 Enviar foto del producto'}
-              </button>
-            )}
-            <textarea value={aiText} onChange={e => { setAiText(e.target.value); setAiSent(false) }} rows={3}
-              style={{ width: '100%', background: `rgba(244,241,236,.04)`, border: `1px solid ${aiSent ? 'rgba(244,241,236,.25)' : 'rgba(99,102,241,.25)'}`, borderRadius: 8, color: C.cream, fontSize: 12, padding: '7px 9px', resize: 'none', outline: 'none', fontFamily: 'inherit', lineHeight: 1.5, whiteSpace: 'pre-wrap' }} />
-            <div style={{ display: 'flex', gap: 5, marginTop: 5 }}>
-              <button onClick={handleSendAI} disabled={aiSending || aiSent || !aiText.trim() || !windowOpen}
-                style={{ ...btnBase, flex: 2, padding: '6px', background: aiSent ? `rgba(244,241,236,.1)` : aiSending ? C.bg : 'linear-gradient(135deg,#6366f1,#4f46e5)', border: `1px solid ${aiSent ? 'rgba(244,241,236,.25)' : 'rgba(99,102,241,.4)'}`, color: aiSent ? C.cream : '#fff', borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: aiSent || aiSending ? 'default' : 'pointer' }}>
-                {aiSent ? '✓ Enviado' : aiSending ? '⏳...' : '📤 Enviar texto'}
-              </button>
-              <button onClick={() => onSendText && onSendText(null, aiText)} style={{ ...btnBase, flex: 1, padding: '6px', background: `rgba(244,241,236,.04)`, border: `1px solid ${C.border}`, color: C.creamDim, borderRadius: 7, fontSize: 11, cursor: 'pointer' }}>✏️ Editar</button>
-            </div>
-          </>
-        ) : (
-          <div style={{ padding: '12px', textAlign: 'center', color: C.creamFaint, fontSize: 11, background: `rgba(244,241,236,.02)`, borderRadius: 8, border: `1px dashed ${C.border2}` }}>Esperando mensaje...</div>
-        )}
+            </>
+          ) : (
+            <div style={{ padding: '12px', textAlign: 'center', color: C.creamFaint, fontSize: 11, background: `rgba(244,241,236,.02)`, borderRadius: 8, border: `1px dashed ${C.border2}` }}>Esperando mensaje...</div>
+          )}
         </div>}
       </div>
 
@@ -256,33 +285,52 @@ export default function RightPanel({ activeConv, onQuickReply, onSendText, onSen
             <div key={reply.id || idx}>
               {editingIdx === idx ? (
                 <div style={{ background: `rgba(244,241,236,.03)`, border: `1px solid ${C.cream}`, borderRadius: 9, padding: '7px', marginBottom: 2 }}>
-                  <textarea value={editText} onChange={e => setEditText(e.target.value)} rows={5} placeholder="Texto..."
-                    style={{ width: '100%', ...inputBase, border: `1px solid ${C.cream}`, resize: 'vertical', marginBottom: 5, whiteSpace: 'pre-wrap', minHeight: 100 }} />
-                  <div style={{ marginBottom: 5 }}>
-                    {editImgPrev ? (
-                      <div style={{ position: 'relative' }}>
-                        <img src={editImgPrev} style={{ width: '100%', height: 52, objectFit: 'cover', borderRadius: 5 }} alt="" />
-                        {editUploading && <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,.5)', borderRadius: 5, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: C.cream }}>Subiendo...</div>}
-                        <button onClick={() => { setEditImgUrl(''); setEditImgPrev(''); if(editFileRef.current) editFileRef.current.value='' }} style={{ position: 'absolute', top: 2, right: 2, background: 'rgba(0,0,0,.6)', border: 'none', color: '#fff', borderRadius: '50%', width: 16, height: 16, cursor: 'pointer', fontSize: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
-                      </div>
-                    ) : (
-                      <button onClick={() => editFileRef.current?.click()} style={{ ...btnBase, width: '100%', padding: '4px', background: 'transparent', border: `1px dashed ${C.border2}`, borderRadius: 6, color: C.creamFaint, fontSize: 10 }}>📷 Imagen</button>
-                    )}
-                    <input ref={editFileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={async e => { const f=e.target.files[0]; if(!f)return; setEditImgPrev(URL.createObjectURL(f)); await uploadImg(f,setEditImgUrl,setEditImgPrev,setEditUploading) }} />
-                  </div>
-                  <div style={{ display: 'flex', gap: 3 }}>
+                  <textarea value={editText} onChange={e => setEditText(e.target.value)} rows={4} placeholder="Texto..."
+                    style={{ width: '100%', ...inputBase, border: `1px solid ${C.cream}`, resize: 'vertical', marginBottom: 5, whiteSpace: 'pre-wrap', minHeight: 80 }} />
+                  {/* Foto 1 */}
+                  <ImgSlot
+                    url={editImgPrev} label="📷 Foto 1"
+                    fileRef={editFileRef}
+                    uploading={editUploading}
+                    onClear={() => { setEditImgUrl(''); setEditImgPrev(''); if(editFileRef.current) editFileRef.current.value='' }}
+                    onFile={async e => { const f=e.target.files[0]; if(!f)return; setEditImgPrev(URL.createObjectURL(f)); await uploadImg(f,setEditImgUrl,setEditImgPrev,setEditUploading) }}
+                  />
+                  {/* Foto 2 */}
+                  <ImgSlot
+                    url={editImgUrl2} label="📷 Foto 2 (opcional)"
+                    fileRef={editFileRef2}
+                    uploading={false}
+                    onClear={() => { setEditImgUrl2(''); if(editFileRef2.current) editFileRef2.current.value='' }}
+                    onFile={async e => { const f=e.target.files[0]; if(!f)return; const u=await uploadImgSimple(f); if(u) setEditImgUrl2(u) }}
+                  />
+                  {/* Foto 3 */}
+                  <ImgSlot
+                    url={editImgUrl3} label="📷 Foto 3 (opcional)"
+                    fileRef={editFileRef3}
+                    uploading={false}
+                    onClear={() => { setEditImgUrl3(''); if(editFileRef3.current) editFileRef3.current.value='' }}
+                    onFile={async e => { const f=e.target.files[0]; if(!f)return; const u=await uploadImgSimple(f); if(u) setEditImgUrl3(u) }}
+                  />
+                  <div style={{ display: 'flex', gap: 3, marginTop: 6 }}>
                     <button onClick={saveEdit} disabled={editUploading} style={{ ...btnBase, flex: 1, padding: '4px', background: `rgba(244,241,236,.1)`, border: `1px solid rgba(244,241,236,.25)`, color: C.cream, borderRadius: 6, fontSize: 10 }}>✓ Guardar</button>
-                    <button onClick={() => { setEditingIdx(null); setEditText(''); setEditImgUrl(''); setEditImgPrev('') }} style={{ ...btnBase, flex: 1, padding: '4px', background: 'transparent', border: `1px solid ${C.border}`, color: C.creamDim, borderRadius: 6, fontSize: 10 }}>✕</button>
+                    <button onClick={() => { setEditingIdx(null); setEditText(''); setEditImgUrl(''); setEditImgPrev(''); setEditImgUrl2(''); setEditImgUrl3('') }} style={{ ...btnBase, flex: 1, padding: '4px', background: 'transparent', border: `1px solid ${C.border}`, color: C.creamDim, borderRadius: 6, fontSize: 10 }}>✕</button>
                   </div>
                 </div>
               ) : (
                 <div style={{ background: `rgba(244,241,236,.02)`, border: `1px solid ${C.border}`, borderRadius: 8, overflow: 'hidden', transition: 'background .1s' }}
                   onMouseEnter={e => e.currentTarget.style.background=`rgba(244,241,236,.04)`}
                   onMouseLeave={e => e.currentTarget.style.background=`rgba(244,241,236,.02)`}>
-                  {reply.imageUrl && <img src={reply.imageUrl} style={{ width: '100%', height: 44, objectFit: 'cover', display: 'block' }} alt="" onError={e => e.currentTarget.style.display='none'} />}
+                  {/* Mini preview de fotos */}
+                  {(reply.imageUrl || reply.imageUrl2 || reply.imageUrl3) && (
+                    <div style={{ display:'flex', gap:2, height:36 }}>
+                      {[reply.imageUrl, reply.imageUrl2, reply.imageUrl3].filter(Boolean).map((u,i) => (
+                        <img key={i} src={u} style={{ flex:1, objectFit:'cover', display:'block' }} alt="" onError={e=>e.currentTarget.style.display='none'} />
+                      ))}
+                    </div>
+                  )}
                   <div style={{ padding: '5px 7px', display: 'flex', alignItems: 'flex-start', gap: 3 }}>
                     <span style={{ flex: 1, fontSize: 11, color: C.creamDim, lineHeight: 1.35, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-                      {reply.imageUrl && '🖼 '}{reply.text}
+                      {(reply.imageUrl||reply.imageUrl2||reply.imageUrl3) && '🖼 '}{reply.text}
                     </span>
                     <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
                       <button onClick={() => handleSendQuick(idx)} disabled={sending===idx||!windowOpen} style={{ ...btnBase, background: `rgba(244,241,236,.1)`, border: `1px solid rgba(244,241,236,.2)`, color: C.cream, borderRadius: 5, width: 20, height: 20, cursor: 'pointer', fontSize: 9, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{sending===idx?'⏳':'➤'}</button>
@@ -302,20 +350,26 @@ export default function RightPanel({ activeConv, onQuickReply, onSendText, onSen
           <textarea value={newText} onChange={e => setNewText(e.target.value)} placeholder="Texto..." rows={2}
             style={{ width: '100%', ...inputBase, fontSize: 11, padding: '5px 7px', resize: 'none', marginBottom: 5, whiteSpace: 'pre-wrap' }}
             onFocus={e => e.target.style.borderColor=C.cream} onBlur={e => e.target.style.borderColor=C.border} />
-          <div style={{ marginBottom: 5 }}>
-            {newImgPrev ? (
-              <div style={{ position: 'relative' }}>
-                <img src={newImgPrev} style={{ width: '100%', height: 52, objectFit: 'cover', borderRadius: 5 }} alt="" />
-                {newUploading && <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,.5)', borderRadius: 5, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: C.cream }}>Subiendo...</div>}
-                <button onClick={() => { setNewImgUrl(''); setNewImgPrev(''); if(newFileRef.current) newFileRef.current.value='' }} style={{ position: 'absolute', top: 2, right: 2, background: 'rgba(0,0,0,.6)', border: 'none', color: '#fff', borderRadius: '50%', width: 16, height: 16, cursor: 'pointer', fontSize: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
-              </div>
-            ) : (
-              <button onClick={() => newFileRef.current?.click()} style={{ ...btnBase, width: '100%', padding: '4px', background: 'transparent', border: `1px dashed ${C.border2}`, borderRadius: 6, color: C.creamFaint, fontSize: 10 }}>📷 Imagen (opcional)</button>
-            )}
-            <input ref={newFileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={async e => { const f=e.target.files[0]; if(!f)return; setNewImgPrev(URL.createObjectURL(f)); await uploadImg(f,setNewImgUrl,setNewImgPrev,setNewUploading) }} />
-          </div>
+          <ImgSlot
+            url={newImgPrev} label="📷 Foto 1 (opcional)"
+            fileRef={newFileRef} uploading={newUploading}
+            onClear={() => { setNewImgUrl(''); setNewImgPrev(''); if(newFileRef.current) newFileRef.current.value='' }}
+            onFile={async e => { const f=e.target.files[0]; if(!f)return; setNewImgPrev(URL.createObjectURL(f)); await uploadImg(f,setNewImgUrl,setNewImgPrev,setNewUploading) }}
+          />
+          <ImgSlot
+            url={newImgUrl2} label="📷 Foto 2 (opcional)"
+            fileRef={newFileRef2} uploading={false}
+            onClear={() => { setNewImgUrl2(''); if(newFileRef2.current) newFileRef2.current.value='' }}
+            onFile={async e => { const f=e.target.files[0]; if(!f)return; const u=await uploadImgSimple(f); if(u) setNewImgUrl2(u) }}
+          />
+          <ImgSlot
+            url={newImgUrl3} label="📷 Foto 3 (opcional)"
+            fileRef={newFileRef3} uploading={false}
+            onClear={() => { setNewImgUrl3(''); if(newFileRef3.current) newFileRef3.current.value='' }}
+            onFile={async e => { const f=e.target.files[0]; if(!f)return; const u=await uploadImgSimple(f); if(u) setNewImgUrl3(u) }}
+          />
           <button onClick={addReply} disabled={!newText.trim()||newUploading}
-            style={{ ...btnBase, width: '100%', padding: '6px', background: newText.trim()&&!newUploading ? `rgba(244,241,236,.1)` : 'transparent', border: `1px solid ${newText.trim()&&!newUploading ? 'rgba(244,241,236,.25)' : C.border}`, color: newText.trim()&&!newUploading ? C.cream : C.creamFaint, borderRadius: 7, fontSize: 11, fontWeight: 600, cursor: newText.trim()&&!newUploading ? 'pointer' : 'default' }}>
+            style={{ ...btnBase, width: '100%', marginTop: 6, padding: '6px', background: newText.trim()&&!newUploading ? `rgba(244,241,236,.1)` : 'transparent', border: `1px solid ${newText.trim()&&!newUploading ? 'rgba(244,241,236,.25)' : C.border}`, color: newText.trim()&&!newUploading ? C.cream : C.creamFaint, borderRadius: 7, fontSize: 11, fontWeight: 600, cursor: newText.trim()&&!newUploading ? 'pointer' : 'default' }}>
             {newUploading ? 'Subiendo...' : '+ Agregar'}
           </button>
         </div>
