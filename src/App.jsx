@@ -393,6 +393,19 @@ export default function App() {
           {/* ══════ SIDEBAR ══════ */}
           <div className={`sidebar${showSidebar ? ' open' : ''}`}>
             <div style={{ padding:'14px 14px 10px', borderBottom:`1px solid ${C.border}`, flexShrink:0 }}>
+              {/* Header IND */}
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
+                <div style={{ display:'flex', alignItems:'center', gap:9 }}>
+                  <div style={{ width:36, height:36, borderRadius:10, background:C.cream, display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, fontWeight:900, color:C.bg, letterSpacing:'-0.5px', boxShadow:'0 4px 16px rgba(244,241,236,.15)' }}>IND</div>
+                  <div>
+                    <div style={{ fontSize:13, fontWeight:800, color:C.cream }}>INDLOVERS CHAT</div>
+                    <div style={{ fontSize:10, fontWeight:700, color:C.creamDim, display:'flex', alignItems:'center', gap:3, marginTop:1 }}>
+                      <span style={{ animation:'pulse 2s infinite', display:'inline-block', width:5, height:5, borderRadius:'50%', background:'#4ade80' }} />
+                      {`En vivo · ${totalUnread} sin leer`}
+                    </div>
+                  </div>
+                </div>
+              </div>
               <div style={{ position:'relative', marginBottom:10 }}>
                 <span style={{ position:'absolute', left:9, top:'50%', transform:'translateY(-50%)', color:C.creamFaint, fontSize:12, pointerEvents:'none' }}>🔍</span>
                 <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar..."
