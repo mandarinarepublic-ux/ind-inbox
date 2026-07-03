@@ -88,6 +88,8 @@ export default function RightPanel({ activeConv, onQuickReply, onSendText, onSen
   const [notasInput,    setNotasInput]    = useState('')
   const [notasSaving,   setNotasSaving]   = useState(false)
   const [notasSaved,    setNotasSaved]    = useState(false)
+  const [openIA,      setOpenIA]      = useState(true)
+  const [openReplies, setOpenReplies] = useState(true)
   const notasLoadedRef = useRef(null)
   const editFileRef    = useRef(null)
   const newFileRef     = useRef(null)
@@ -194,23 +196,19 @@ export default function RightPanel({ activeConv, onQuickReply, onSendText, onSen
         </div>
 
         <div style={{ marginTop: 7, display: 'flex', gap: 6 }}>
-          {[['📥', activeConv.msgs.filter(m=>m.direccion==='ENTRANTE').length, 'Recibidos'],
-            ['📤', activeConv.msgs.filter(m=>m.direccion==='SALIENTE').length, 'Enviados']].map(([ic,val,label]) => (
-            <div key={label} style={{ flex: 1, background: `rgba(244,241,236,.03)`, border: `1px solid ${C.border}`, borderRadius: 8, padding: '6px 4px', textAlign: 'center' }}>
-              <div style={{ fontSize: 13 }}>{ic}</div>
-              <div style={{ fontSize: 14, fontWeight: 800, color: C.cream, marginTop: 1 }}>{val}</div>
-              <div style={{ fontSize: 9, color: C.creamFaint }}>{label}</div>
-            </div>
-          ))}
         </div>
       </div>
 
-      {/* SUGERENCIA IA */}
-      <div style={{ flexShrink: 0, padding: '10px 12px', borderBottom: `1px solid ${C.border}` }}>
-        <p style={{ fontSize: 10, color: '#6366f1', fontWeight: 700, letterSpacing: '.08em', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 5 }}>
-          🤖 SUGERENCIA IA
-          {aiSuggestion && <span style={{ fontSize: 8, background: 'rgba(99,102,241,.15)', color: '#818cf8', borderRadius: 10, padding: '1px 6px' }}>Gemini</span>}
-        </p>
+      {/* SUGERENCIA IA - acordeón */}
+      <div style={{ flexShrink: 0, borderBottom: `1px solid ${C.border}` }}>
+        <button onClick={() => setOpenIA(p=>!p)} style={{ width:'100%', padding:'8px 12px', background:'transparent', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'space-between', fontFamily:'inherit' }}>
+          <span style={{ fontSize: 10, color: '#6366f1', fontWeight: 700, letterSpacing: '.08em', display:'flex', alignItems:'center', gap:5 }}>
+            🤖 SUGERENCIA IA
+            {aiSuggestion && <span style={{ fontSize: 8, background: 'rgba(99,102,241,.15)', color: '#818cf8', borderRadius: 10, padding: '1px 6px' }}>Gemini</span>}
+          </span>
+          <span style={{ color: C.creamFaint, fontSize: 10 }}>{openIA ? '▲' : '▼'}</span>
+        </button>
+        {openIA && <div style={{ padding: '0 12px 10px' }}>
         {aiSuggestion ? (
           <>
             {(aiImgPrev || aiImgShopify) && (
