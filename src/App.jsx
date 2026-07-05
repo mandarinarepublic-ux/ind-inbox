@@ -276,10 +276,10 @@ export default function App() {
           const res  = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, { method:'POST', body:fd })
           const data = await res.json()
           if (!data.success) { allOk = false; continue }
-          const ok = await sendImageUrl(data.data.url)
+          const ok = await sendImageUrlApi(activeConv.telefono, activeConv.nombre, data.data.url)
           if (!ok) allOk = false
           setImgProgress(i + 1)
-          if (i < imgFiles.length - 1) await new Promise(r => setTimeout(r, 800)) // pausa entre envíos
+          if (i < imgFiles.length - 1) await new Promise(r => setTimeout(r, 800))
         }
       }
       setImgResult({ ok: allOk })
