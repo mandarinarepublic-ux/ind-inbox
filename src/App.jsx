@@ -298,10 +298,11 @@ export default function App() {
 
   const handleQuickReply = async (reply) => {
     if (!activeConv) return
-    // 1. Texto primero
     if (reply.text) await handleSend(reply.text)
-    // 2. Fotos en secuencia usando api.js (URL hardcodeada)
-    const imgs = [reply.imageUrl, reply.imageUrl2, reply.imageUrl3].filter(Boolean)
+    // Recoger hasta 10 imágenes
+    const imgs = Array.from({length: 10}, (_, i) =>
+      i === 0 ? reply.imageUrl : reply[`imageUrl${i+1}`]
+    ).filter(Boolean)
     for (let i = 0; i < imgs.length; i++) {
       await sendImageUrlApi(activeConv.telefono, activeConv.nombre, imgs[i])
       if (i < imgs.length - 1) await new Promise(r => setTimeout(r, 800))

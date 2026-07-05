@@ -86,11 +86,18 @@ export async function saveNotes(telefono, nombre, notas) {
 // ── RESPUESTAS RÁPIDAS ────────────────────────────────────────────
 function mapReply(row) {
   return {
-    id:        String(row[0] || ''),
-    text:      row[1] || '',
-    imageUrl:  row[2] || '',
-    imageUrl2: row[3] || '',
-    imageUrl3: row[4] || '',
+    id:         String(row[0]  || ''),
+    text:       row[1]  || '',
+    imageUrl:   row[2]  || '',
+    imageUrl2:  row[3]  || '',
+    imageUrl3:  row[4]  || '',
+    imageUrl4:  row[5]  || '',
+    imageUrl5:  row[6]  || '',
+    imageUrl6:  row[7]  || '',
+    imageUrl7:  row[8]  || '',
+    imageUrl8:  row[9]  || '',
+    imageUrl9:  row[10] || '',
+    imageUrl10: row[11] || '',
   }
 }
 
