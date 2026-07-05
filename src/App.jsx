@@ -18,7 +18,7 @@ const C = {
 }
 
 const IMGBB_KEY    = '2307574d43689522feabd27cff3443df'
-const MAKE_WEBHOOK = import.meta.env.VITE_MAKE_SEND_WEBHOOK || ''
+const MAKE_WEBHOOK = 'https://hook.us2.make.com/fm5f8e9ow7k5vtykqhihcjt7yg25v9u9'
 
 async function toJpeg(file) {
   return new Promise((resolve) => {
