@@ -7,8 +7,11 @@ const SHEET_ID      = '1ObNIff1ypeFW7PfuAjeoiGBJCDyZU4etIsbGpyB-Nqk'
 const META_PHONE_ID = '1092674123940116'
 const META_TOKEN    = 'EAAV1SMGzaLkBR01kWvaBlW0EyWAHIAah0fBPU85s1ZClKFoAoyqZCmO4vG6tOXUdGWRkxZAGISpU7fK3kyyfijf5YH00OLae57dJsFVNTDhIUv3IuzbVOEZBdd8zDvEGYPACtF0dIB7gs4DmPvPhF4pQ2JZBuLk20NZAyPsKxRw4xaTwZBMCnisf7nsJyFsDPfZC4AZDZD'
 
-// ── Webhook envío IND (hardcodeado para evitar env var vacía) ─────────────────
-const SEND_WEBHOOK = 'https://hook.us2.make.com/fm5f8e9ow7k5vtykqhihcjt7yg25v9u9'
+// ── Webhooks hardcodeados ────────────────────────────────────────
+const SEND_WEBHOOK         = 'https://hook.us2.make.com/fm5f8e9ow7k5vtykqhihcjt7yg25v9u9'
+const REPLIES_WRITE_WEBHOOK = 'https://hook.us2.make.com/txowwyf2hvjrxcu6q5ji2m5oxtmeu47u'
+
+export const isDemo = () => false
 
 // ── Helper Google Sheets ─────────────────────────────────────────
 async function fetchSheet(sheetName) {
@@ -22,16 +25,16 @@ async function fetchSheet(sheetName) {
 // ── MENSAJES ─────────────────────────────────────────────────────
 function mapRow(row) {
   return {
-    id:             row[0] || '',
+    id:             row[0]  || '',
     telefono:       String(row[1] || ''),
-    nombre:         row[2] || String(row[1] || '') || 'Sin nombre',
-    tipo:           row[3] || 'texto',
-    mensaje:        row[4] || '',
-    mediaUrl:       row[5] || '',
-    timestamp:      row[6] || new Date().toISOString(),
-    direccion:      row[7] || 'ENTRANTE',
+    nombre:         row[2]  || String(row[1] || '') || 'Sin nombre',
+    tipo:           row[3]  || 'texto',
+    mensaje:        row[4]  || '',
+    mediaUrl:       row[5]  || '',
+    timestamp:      row[6]  || new Date().toISOString(),
+    direccion:      row[7]  || 'ENTRANTE',
     estado:         'leido',
-    respuestaIA:    row[9] || '',
+    respuestaIA:    row[9]  || '',
     imagenProducto: row[10] || '',
     contextoId:     row[11] || '',
   }
@@ -47,7 +50,7 @@ export async function fetchRows() {
   }
 }
 
-// ── CONTACTOS ─────────────────────────────────────────────────────
+// ── CONTACTOS ────────────────────────────────────────────────────
 function mapContact(row) {
   return {
     telefono: String(row[0] || ''),
@@ -86,18 +89,18 @@ export async function saveNotes(telefono, nombre, notas) {
 // ── RESPUESTAS RÁPIDAS ────────────────────────────────────────────
 function mapReply(row) {
   return {
-    id:         String(row[0]  || ''),
-    text:       row[1]  || '',
-    imageUrl:   row[2]  || '',
-    imageUrl2:  row[3]  || '',
-    imageUrl3:  row[4]  || '',
-    imageUrl4:  row[5]  || '',
-    imageUrl5:  row[6]  || '',
-    imageUrl6:  row[7]  || '',
-    imageUrl7:  row[8]  || '',
-    imageUrl8:  row[9]  || '',
-    imageUrl9:  row[10] || '',
-    imageUrl10: row[11] || '',
+    id:          String(row[0]  || ''),
+    text:        row[1]  || '',
+    imageUrl:    row[2]  || '',
+    imageUrl2:   row[3]  || '',
+    imageUrl3:   row[4]  || '',
+    imageUrl4:   row[5]  || '',
+    imageUrl5:   row[6]  || '',
+    imageUrl6:   row[7]  || '',
+    imageUrl7:   row[8]  || '',
+    imageUrl8:   row[9]  || '',
+    imageUrl9:   row[10] || '',
+    imageUrl10:  row[11] || '',
   }
 }
 
@@ -109,6 +112,28 @@ export async function fetchRepliesFromSheet() {
     console.error('[IND Inbox] fetchReplies:', err)
     return []
   }
+}
+
+// ── RESPUESTAS RÁPIDAS CRUD ───────────────────────────────────────
+export async function writeReply(accion, reply) {
+  try {
+    await fetch(REPLIES_WRITE_WEBHOOK, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        accion, id: reply.id, texto: reply.text,
+        imagenUrl:   reply.imageUrl   || '',
+        imagenUrl2:  reply.imageUrl2  || '',
+        imagenUrl3:  reply.imageUrl3  || '',
+        imagenUrl4:  reply.imageUrl4  || '',
+        imagenUrl5:  reply.imageUrl5  || '',
+        imagenUrl6:  reply.imageUrl6  || '',
+        imagenUrl7:  reply.imageUrl7  || '',
+        imagenUrl8:  reply.imageUrl8  || '',
+        imagenUrl9:  reply.imageUrl9  || '',
+        imagenUrl10: reply.imageUrl10 || '',
+      }),
+    })
+  } catch(err) { console.error('[IND Inbox] writeReply:', err) }
 }
 
 // ── ENVIAR TEXTO ──────────────────────────────────────────────────
@@ -192,15 +217,4 @@ export async function sendVideo(telefono, nombre, videoFile) {
     console.error('[IND Inbox] sendVideo:', err)
     return { ok: false, error: err.message }
   }
-}
-
-// ── RESPUESTAS RÁPIDAS CRUD ───────────────────────────────────────
-export async function writeReply(accion, reply) {
-  const _url = 'https://hook.us2.make.com/txowwyf2hvjrxcu6q5ji2m5oxtmeu47u'
-  try {
-    await fetch(_url, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ accion, id: reply.id, texto: reply.text, imagenUrl: reply.imageUrl }),
-    })
-  } catch(err) { console.error('[IND Inbox] writeReply:', err) }
 }
